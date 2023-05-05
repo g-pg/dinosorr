@@ -350,7 +350,7 @@ function showGameOver() {
 function resetGame(e) {
 	if (e.key === " " || e instanceof TouchEvent) {
 		score = 0;
-		gameSpeed = 15;
+		gameSpeed = 10;
 		jump(e);
 		generateCactus();
 		cacti = [new Cactus()];
