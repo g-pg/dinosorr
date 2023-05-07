@@ -3,7 +3,7 @@ const ctx = canvas.getContext("2d");
 const sprites = new Image();
 
 window.innerWidth;
-canvas.width = window.innerWidth * 0.8;
+canvas.width = window.innerWidth > 800 ? window.innerWidth * 0.7 : 800;
 canvas.height = 300;
 
 sprites.src = "sprites.png";
@@ -14,17 +14,7 @@ let score = 0;
 let gameState = "menu"; //menu || game || gameOver
 let bestScore = 0;
 
-function increaseTicks() {
-	if (gameState === "gameOver" || gameSpeed === 0) return;
-	if (ticks === 60) {
-		ticks = 0;
-	}
-
-	ticks++;
-}
-setInterval(increaseTicks, 1000 / gameSpeed);
-
-// Board
+//Board
 const floor = {
 	sx: 0,
 	sy: 104,
@@ -36,6 +26,65 @@ const floor = {
 	dHeight: 26,
 };
 
+//Entities
+const dino = {
+	sx: 1338,
+	sy: 2,
+	sWidth: 88,
+	sHeight: 96,
+	dx: 10,
+	dy: canvas.height - 96,
+	dWidth: 88,
+	dHeight: 96,
+	gravity: 1.5,
+	yVel: 0,
+
+	//sx for others sprites:
+	firstStepSx: 1514,
+	secondStepSx: 1602,
+	jumpSx: 1338,
+	deadSx: 1690,
+};
+
+//Cacti
+class Cactus {
+	constructor(dx) {
+		this.sx = 446;
+		this.sy = 2;
+		this.sWidth = 34;
+		this.sHeight = 70;
+		this.dx = dx || canvas.width;
+		this.dy = canvas.height - 80;
+		this.dWidth = 34;
+		this.dHeight = 70;
+		this.passed = false;
+	}
+}
+
+class TallCactus extends Cactus {
+	constructor(dx) {
+		super(dx);
+		this.sx = 752;
+		this.sWidth = 51;
+		this.sHeight = 101;
+		this.dWidth = 41;
+		this.dHeight = 101;
+		this.dy = canvas.height - 100;
+	}
+}
+class TripleCactus extends Cactus {
+	constructor(dx) {
+		super(dx);
+		this.sx = 850;
+		this.sWidth = 103;
+		this.sHeight = 101;
+		this.dWidth = 103;
+		this.dHeight = 101;
+		this.dy = canvas.height - 100;
+	}
+}
+
+//Board logic
 let firstFloorPos = 0;
 let secondFloorPos = 2397;
 
@@ -78,44 +127,7 @@ function drawBoard() {
 	ctx.fillText("Best: " + Math.floor(bestScore), canvas.width - 300, 30);
 }
 
-//Cacti
-class Cactus {
-	constructor(dx) {
-		this.sx = 446;
-		this.sy = 2;
-		this.sWidth = 34;
-		this.sHeight = 70;
-		this.dx = dx || canvas.width;
-		this.dy = canvas.height - 80;
-		this.dWidth = 34;
-		this.dHeight = 70;
-		this.passed = false;
-	}
-}
-
-class TallCactus extends Cactus {
-	constructor(dx) {
-		super(dx);
-		this.sx = 752;
-		this.sWidth = 51;
-		this.sHeight = 101;
-		this.dWidth = 41;
-		this.dHeight = 101;
-		this.dy = canvas.height - 100;
-	}
-}
-class TripleCactus extends Cactus {
-	constructor(dx) {
-		super(dx);
-		this.sx = 850;
-		this.sWidth = 103;
-		this.sHeight = 101;
-		this.dWidth = 103;
-		this.dHeight = 101;
-		this.dy = canvas.height - 100;
-	}
-}
-
+//Cacti logic
 let cacti = [new Cactus()];
 const GAP = 500;
 function generateCactus() {
@@ -151,8 +163,6 @@ function generateCactus() {
 	if (lastCactusPos >= GAP) {
 		cacti.push(pickCactus(randomDistance));
 	}
-
-	console.log(cacti.length);
 }
 
 setInterval(generateCactus, 500);
@@ -180,26 +190,7 @@ function drawCacti() {
 	}
 }
 
-//Dino
-const dino = {
-	sx: 1338,
-	sy: 2,
-	sWidth: 88,
-	sHeight: 96,
-	dx: 10,
-	dy: canvas.height - 96,
-	dWidth: 88,
-	dHeight: 96,
-	gravity: 1.5,
-	yVel: 0,
-	//sx for others sprites:
-	firstStepSx: 1514,
-	secondStepSx: 1602,
-	jumpSx: 1338,
-	deadSx: 1690,
-};
-
-//jump
+//Dino logic
 let isJumping = dino.dy < canvas.height - dino.dHeight;
 
 function jump(e) {
@@ -222,7 +213,6 @@ function imposeGravity() {
 	}
 }
 
-//draw
 function drawDino() {
 	if (gameState !== "gameOver") {
 		dino.sx = ticks % 2 === 0 ? dino.firstStepSx : dino.secondStepSx;
@@ -279,7 +269,7 @@ function checkCollision() {
 	gameSpeed = gameSpeed > 15 ? gameSpeed : gameSpeed + 0.001;
 }
 
-//Screens
+//Controls
 document.addEventListener("touchstart", controls);
 document.addEventListener("keydown", controls);
 function controls(e) {
@@ -291,6 +281,17 @@ function controls(e) {
 		return resetGame(e);
 	}
 }
+
+//Loops and screens
+function increaseTicks() {
+	if (gameState === "gameOver" || gameSpeed === 0) return;
+	if (ticks === 60) {
+		ticks = 0;
+	}
+
+	ticks++;
+}
+setInterval(increaseTicks, 1000 / gameSpeed);
 
 function loop() {
 	if (gameState === "menu") {
@@ -369,12 +370,12 @@ document.addEventListener("keydown", (e) => {
 	}
 });
 
-// function drawHitboxes() {
-// 	for (const object of [dino, ...cacti]) {
-// 		ctx.beginPath();
-// 		ctx.rect(object.dx, object.dy, object.dWidth, object.dHeight);
-// 		ctx.lineWidth = 1;
-// 		ctx.strokeStyle = "#ff0000";
-// 		ctx.stroke();
-// 	}
-// }
+function drawHitboxes() {
+	for (const object of [dino, ...cacti]) {
+		ctx.beginPath();
+		ctx.rect(object.dx, object.dy, object.dWidth, object.dHeight);
+		ctx.lineWidth = 1;
+		ctx.strokeStyle = "#ff0000";
+		ctx.stroke();
+	}
+}
